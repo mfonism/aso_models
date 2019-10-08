@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.query_utils import Q
 
 
 class ShrewdQuerySet(models.QuerySet):
@@ -26,3 +27,8 @@ class ShrewdQuerySet(models.QuerySet):
             'recycle bin at the same time!'
         )
         super().__init__(*args, **kwargs)
+        if self.is_shrewd:
+            # queryset should fetch only active, non soft-deleted objects
+            self.query.add_q(
+                Q(deleted_at__isnull=True, activated_at__isnull=False)
+            )

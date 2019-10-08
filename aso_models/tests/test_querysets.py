@@ -24,6 +24,18 @@ class ShrewdQuerySetTest(TransactionTestCase):
         with connection.schema_editor() as schema_editor:
             schema_editor.create_model(self.model)
 
+        # create eight model objects, save them
+        self.mos = [self.model() for i in range(8)]
+        for mo in self.mos:
+            mo.save()
+
+        # populate the appropriate fields in the
+        # last four objects to simulate soft delete
+        for mo in self.mos[4:]:
+            mo.activated_at = None
+            mo.deleted_at = timezone.now()
+            mo.save()
+
     def tearDown(self):
         with connection.schema_editor() as schema_editor:
             schema_editor.delete_model(self.model)
@@ -41,3 +53,14 @@ class ShrewdQuerySetTest(TransactionTestCase):
             'recycle bin at the same time!'
         )
         self.assertEqual(str(cm.exception), expected_error_msg)
+
+    def test_shrewd_mode_fetch(self):
+        '''
+        Assert that the default, shrewd mode fetches only
+        active objects which are not currently soft-deleted.
+        '''
+        qs = ShrewdQuerySet(self.model)
+        self.assertEqual(qs.count(), 4)
+        for mo in qs:
+            self.assertIsNotNone(mo.activated_at)
+            self.assertIsNone(mo.deleted_at)

@@ -46,7 +46,7 @@ class ShrewdQuerySetTest(TransactionTestCase):
         mode, and be operating on a recycle bin at the same time.
         '''
         with self.assertRaises(AssertionError) as cm:
-            ShrewdQuerySet(self.model, on_recycle_bin=True)
+            ShrewdQuerySet(self.model, shrewd_mode=True, on_recycle_bin=True)
 
         expected_error_msg = (
             'Shrewd queryset cannot exist in the shrewd mode and work on a '
@@ -56,10 +56,10 @@ class ShrewdQuerySetTest(TransactionTestCase):
 
     def test_shrewd_mode_fetch(self):
         '''
-        Assert that the default, shrewd mode fetches only
+        Assert that shrewd mode fetches only
         active objects which are not currently soft-deleted.
         '''
-        qs = ShrewdQuerySet(self.model)
+        qs = ShrewdQuerySet(self.model, shrewd_mode=True)
         self.assertEqual(qs.count(), 4)
         for mo in qs:
             self.assertIsNotNone(mo.activated_at)

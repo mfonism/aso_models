@@ -7,7 +7,7 @@ class ShrewdQuerySet(models.QuerySet):
     I am the queryset for shrewd models.
 
     FETCH OP:
-    * In my default, shrewd mode I fetch objects (of the model) which
+    * In my shrewd mode I fetch objects (of the model) which
     are active and have not been soft deleted.
     * In the non-shrewd mode I fetch every darned object of the model.
     * I can also operate on the recycle bin - in this state I fetch
@@ -20,7 +20,7 @@ class ShrewdQuerySet(models.QuerySet):
     * Outside my shrewd mode, (bulk) delete is 'hard' and CANNOT be undone.
     '''
     def __init__(self, *args, **kwargs):
-        self.is_shrewd = kwargs.pop('shrewd_mode', True)
+        self.is_shrewd = kwargs.pop('shrewd_mode', False)
         self.is_on_recycle_bin = kwargs.pop('on_recycle_bin', False)
         assert not (self.is_shrewd and self.is_on_recycle_bin), (
             'Shrewd queryset cannot exist in the shrewd mode and work on a '

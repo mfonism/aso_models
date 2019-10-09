@@ -47,3 +47,4 @@ class ShrewdQuerySet(models.QuerySet):
         '''
         if self.is_shrewd:
             return self.update(deleted_at=timezone.now(), activated_at=None)
+        return super().delete()

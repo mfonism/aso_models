@@ -171,6 +171,35 @@ class ShrewdQuerySetTest(TransactionTestCase):
         )
         self.assertEqual(str(cm.exception), expected_error_msg)
 
+    def test_restore_op_on_recycle_bin(self):
+        '''
+        Assert that bulk restore is possible on the recycle bin,
+        and that it actually clears the bin.
+        '''
+        onbin = ShrewdQuerySet(self.model, on_recycle_bin=True)
+        self.assertEqual(onbin.count(), 4)
+
+        num = onbin.restore()
+        self.assertEqual(num, 4)
+        self.assertEqual(onbin.count(), 0)
+
+    def test_restored_objects_can_be_found_outside_the_recycle_bin(self):
+        '''
+        Assert that restoration sends the so deleted
+        objects outside the recycle bin.
+        '''
+        qs = ShrewdQuerySet(self.model, shrewd_mode=True)
+        onbin = ShrewdQuerySet(self.model, on_recycle_bin=True)
+        pre_restoration_onbin_pks = [mo.pk for mo in onbin]
+
+        self.assertEqual(qs.count(), 4)
+        onbin.restore()
+        self.assertEqual(qs.count(), 8)
+
+        qs_pks = [mo.pk for mo in qs]
+        for restored_mo_pk in pre_restoration_onbin_pks:
+            self.assertIn(restored_mo_pk, qs_pks)
+
     def test_no_restore_op_in_default_mode(self):
         '''
         Assert that assertion error is raised on

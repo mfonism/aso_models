@@ -42,7 +42,7 @@ class ShrewdQuerySet(models.QuerySet):
         Perform soft-delete if in shrewd mode, otherwise delete for good.
 
         Soft delete sets the `deleted_at` field and clears the `activated_at`
-        field. This way, the object can be found by a shrewd queryset operating
+        field. This way, the objects can be found by shrewd querysets operating
         on the recycle bin.
         '''
         if self.is_shrewd:
@@ -59,9 +59,15 @@ class ShrewdQuerySet(models.QuerySet):
         '''
         Attempt to restore soft-deleted model objects in the shrewd queryset.
 
-        Calling this anyway outside a recycle bin raises an error.
+        Restoration clears the `deleted_at` field and sets the `activated_at`
+        field on each object in the shrewd queryset.
+        This way, the objects can now be found by shrewd querysets operating
+        either in the default or the shrewd mode.
+
+        WATCH OUT: Calling `restore` outside a recycle bin raises an error.
         '''
         assert self.is_on_recycle_bin, (
             'Restore operation is only allowed (on a shrewd '
             'queryset which is operating) on the recycle bin.'
         )
+        return self.update(deleted_at=None, activated_at=timezone.now())

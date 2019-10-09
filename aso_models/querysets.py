@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models.query_utils import Q
+from django.utils import timezone
 
 
 class ShrewdQuerySet(models.QuerySet):
@@ -35,3 +36,14 @@ class ShrewdQuerySet(models.QuerySet):
         elif self.is_on_recycle_bin:
             # queryset should fetch only soft-deleted objects
             self.query.add_q(Q(deleted_at__isnull=False))
+
+    def delete(self):
+        '''
+        Perform soft-delete if in shrewd mode, otherwise delete for good.
+
+        Soft delete sets the `deleted_at` field and clears the `activated_at`
+        field. This way, the object can be found by a shrewd queryset operating
+        on the recycle bin.
+        '''
+        if self.is_shrewd:
+            return self.update(deleted_at=timezone.now(), activated_at=None)

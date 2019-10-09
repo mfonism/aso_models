@@ -83,3 +83,19 @@ class ShrewdQuerySetTest(TransactionTestCase):
         qs = ShrewdQuerySet(self.model)
         self.assertEqual(qs.count(), 8)
         self.assertEqual(list(qs), self.mos)
+
+    def test_shrewd_mode_bulk_delete_is_soft(self):
+        '''
+        Assert that shrewd mode sends
+        objects to 'the recycle bin' on bulk deletion.
+        '''
+        qs = ShrewdQuerySet(self.model, shrewd_mode=True)
+        onbin = ShrewdQuerySet(self.model, on_recycle_bin=True)
+
+        self.assertEqual(qs.count(), 4)
+        self.assertEqual(onbin.count(), 4)
+
+        num = qs.delete()
+        self.assertEqual(num, 4)
+        self.assertEqual(qs.count(), 0)
+        self.assertEqual(onbin.count(), 8)

@@ -155,3 +155,33 @@ class ShrewdQuerySetTest(TransactionTestCase):
         qs.delete()
         self.assertEqual(qs.count(), 0)
         self.assertEqual(indb.count(), 0)
+
+    def test_no_restore_op_in_shrewd_mode(self):
+        '''
+        Assert that assertion error is raised on
+        calling `restore` on shrewd queryset in its shrewd mode.
+        '''
+        qs = ShrewdQuerySet(self.model, shrewd_mode=True)
+        with self.assertRaises(AssertionError) as cm:
+            qs.restore()
+
+        expected_error_msg = (
+            'Restore operation is only allowed (on a shrewd '
+            'queryset which is operating) on the recycle bin.'
+        )
+        self.assertEqual(str(cm.exception), expected_error_msg)
+
+    def test_no_restore_op_in_default_mode(self):
+        '''
+        Assert that assertion error is raised on
+        calling `restore` on shrewd queryset in its default mode.
+        '''
+        qs = ShrewdQuerySet(self.model)
+        with self.assertRaises(AssertionError) as cm:
+            qs.restore()
+
+        expected_error_msg = (
+            'Restore operation is only allowed (on a shrewd '
+            'queryset which is operating) on the recycle bin.'
+        )
+        self.assertEqual(str(cm.exception), expected_error_msg)

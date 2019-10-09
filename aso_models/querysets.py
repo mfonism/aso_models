@@ -54,3 +54,14 @@ class ShrewdQuerySet(models.QuerySet):
             # for now we just go with an empty counter/bag
             return self.update(deleted_at=timezone.now(), activated_at=None), {}
         return super().delete()
+
+    def restore(self):
+        '''
+        Attempt to restore soft-deleted model objects in the shrewd queryset.
+
+        Calling this anyway outside a recycle bin raises an error.
+        '''
+        assert self.is_on_recycle_bin, (
+            'Restore operation is only allowed (on a shrewd '
+            'queryset which is operating) on the recycle bin.'
+        )

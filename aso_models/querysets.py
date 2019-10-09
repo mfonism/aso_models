@@ -32,3 +32,6 @@ class ShrewdQuerySet(models.QuerySet):
             self.query.add_q(
                 Q(deleted_at__isnull=True, activated_at__isnull=False)
             )
+        elif self.is_on_recycle_bin:
+            # queryset should fetch only soft-deleted objects
+            self.query.add_q(Q(deleted_at__isnull=False))

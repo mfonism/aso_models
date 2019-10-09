@@ -64,3 +64,13 @@ class ShrewdQuerySetTest(TransactionTestCase):
         for mo in qs:
             self.assertIsNotNone(mo.activated_at)
             self.assertIsNone(mo.deleted_at)
+
+    def test_recycle_bin_fetch(self):
+        '''
+        Assert that shrewd queryset operating on the
+        recycle bin fetches only soft-deleted objects.
+        '''
+        qs = ShrewdQuerySet(self.model, on_recycle_bin=True)
+        self.assertEqual(qs.count(), 4)
+        for mo in qs:
+            self.assertIsNotNone(mo.deleted_at)

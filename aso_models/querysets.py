@@ -46,5 +46,11 @@ class ShrewdQuerySet(models.QuerySet):
         on the recycle bin.
         '''
         if self.is_shrewd:
-            return self.update(deleted_at=timezone.now(), activated_at=None)
+            # in respecting the interface of
+            # `models.QuerySet.delete`, we return a 2-tuple containing
+            # the number of the soft-deleted objects and
+            # a dict representation of a counter/bag of their respective models
+            #
+            # for now we just go with an empty counter/bag
+            return self.update(deleted_at=timezone.now(), activated_at=None), {}
         return super().delete()

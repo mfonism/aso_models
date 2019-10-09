@@ -95,8 +95,9 @@ class ShrewdQuerySetTest(TransactionTestCase):
         self.assertEqual(qs.count(), 4)
         self.assertEqual(onbin.count(), 4)
 
-        num = qs.delete()
+        num, _ = qs.delete()
         self.assertEqual(num, 4)
+        self.assertIsInstance(_, dict)
         self.assertEqual(qs.count(), 0)
         self.assertEqual(onbin.count(), 8)
 
@@ -109,4 +110,5 @@ class ShrewdQuerySetTest(TransactionTestCase):
 
         num, _ = onbin.delete()
         self.assertEqual(num, 4)
+        self.assertIsInstance(_, dict)
         self.assertEqual(onbin.count(), 0)

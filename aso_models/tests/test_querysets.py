@@ -141,3 +141,17 @@ class ShrewdQuerySetTest(TransactionTestCase):
         indb_pks = [mo.pk for mo in indb]
         for deleted_mo_pk in pre_deletion_onbin_pks:
             self.assertNotIn(deleted_mo_pk, indb_pks)
+
+    def test_default_delete(self):
+        '''
+        Assert that shrewd queryset in its default mode
+        deletes objects for good on bulk deletion.
+        '''
+        qs = ShrewdQuerySet(self.model)
+        indb = models.QuerySet(self.model)
+
+        self.assertEqual(qs.count(), 8)
+        self.assertEqual(indb.count(), 8)
+        qs.delete()
+        self.assertEqual(qs.count(), 0)
+        self.assertEqual(indb.count(), 0)

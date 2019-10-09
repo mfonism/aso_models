@@ -1,4 +1,4 @@
-from django.db import connection
+from django.db import connection, models
 from django.db.models.base import ModelBase
 from django.test import TransactionTestCase
 from django.utils import timezone
@@ -84,26 +84,39 @@ class ShrewdQuerySetTest(TransactionTestCase):
         self.assertEqual(qs.count(), 8)
         self.assertEqual(list(qs), self.mos)
 
-    def test_shrewd_mode_bulk_delete_is_soft(self):
+    def test_shrewd_mode_bulk_delete(self):
         '''
-        Assert that shrewd mode sends
-        objects to 'the recycle bin' on bulk deletion.
+        Assert that bulk delete on a shrewd queryset in
+        shrewd mode clears the queryset.
         '''
         qs = ShrewdQuerySet(self.model, shrewd_mode=True)
-        onbin = ShrewdQuerySet(self.model, on_recycle_bin=True)
-
         self.assertEqual(qs.count(), 4)
-        self.assertEqual(onbin.count(), 4)
 
         num, _ = qs.delete()
         self.assertEqual(num, 4)
         self.assertIsInstance(_, dict)
         self.assertEqual(qs.count(), 0)
+
+    def test_shrewd_mode_bulk_delete_is_soft(self):
+        '''
+        Assert that bulk delete on a shrewd queryset in
+        shrewd mode sends the so deleted objects to the recycle bin.
+        '''
+        qs = ShrewdQuerySet(self.model, shrewd_mode=True)
+        onbin = ShrewdQuerySet(self.model, on_recycle_bin=True)
+        pre_deletion_qs_pks = [mo.pk for mo in qs]
+
+        self.assertEqual(onbin.count(), 4)
+        qs.delete()
         self.assertEqual(onbin.count(), 8)
 
-    def test_recycle_bin_delete_is_permanent(self):
+        recycle_bin_pks = [mo.pk for mo in onbin]
+        for deleted_mo_pk in pre_deletion_qs_pks:
+            self.assertIn(deleted_mo_pk, recycle_bin_pks)
+
+    def test_recycle_bin_delete(self):
         '''
-        Assert that the recycle bin deletes objects for good on bulk deletion.
+        Assert that bulk delete on a recycle bin clears the recycle bin.
         '''
         onbin = ShrewdQuerySet(self.model, on_recycle_bin=True)
         self.assertEqual(onbin.count(), 4)
@@ -112,3 +125,19 @@ class ShrewdQuerySetTest(TransactionTestCase):
         self.assertEqual(num, 4)
         self.assertIsInstance(_, dict)
         self.assertEqual(onbin.count(), 0)
+
+    def test_recycle_bin_delete_is_permanent(self):
+        '''
+        Assert that the recycle bin deletes objects for good on bulk deletion.
+        '''
+        onbin = ShrewdQuerySet(self.model, on_recycle_bin=True)
+        indb = models.QuerySet(self.model)
+        pre_deletion_onbin_pks = [mo.pk for mo in onbin]
+
+        self.assertEqual(indb.count(), 8)
+        onbin.delete()
+        self.assertEqual(indb.count(), 4)
+
+        indb_pks = [mo.pk for mo in indb]
+        for deleted_mo_pk in pre_deletion_onbin_pks:
+            self.assertNotIn(deleted_mo_pk, indb_pks)

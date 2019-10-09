@@ -74,3 +74,12 @@ class ShrewdQuerySetTest(TransactionTestCase):
         self.assertEqual(qs.count(), 4)
         for mo in qs:
             self.assertIsNotNone(mo.deleted_at)
+
+    def test_default_fetch(self):
+        '''
+        Assert that by default, shrewd queryset fetches
+        every object of the underlying model which exists in the database.
+        '''
+        qs = ShrewdQuerySet(self.model)
+        self.assertEqual(qs.count(), 8)
+        self.assertEqual(list(qs), self.mos)

@@ -1,11 +1,11 @@
 from django.apps import registry
-from django.db import connection, models
+from django.db import connection
 from django.db.models.base import ModelBase
 from django.test import TransactionTestCase
 
 from ..models import AbstractShrewdModel
-from ..managers import ShrewdManager, NaiveManager
-from ..querysets import ShrewdQuerySet, NaiveQuerySet
+from ..managers import ShrewdManager, NaiveManager, RecycleBinManager
+from ..querysets import ShrewdQuerySet, NaiveQuerySet, RecycleBinQuerySet
 
 
 class ShrewdManagerTest(TransactionTestCase):
@@ -50,6 +50,10 @@ class ShrewdManagerTest(TransactionTestCase):
         self.naive_mgr = NaiveManager()
         self.naive_mgr.model = self.model
 
+        # mock up a recycle bin manager
+        self.recycle_bin_mgr = RecycleBinManager()
+        self.recycle_bin_mgr.model = self.model
+
     def tearDown(self):
         with connection.schema_editor() as schema_editor:
             schema_editor.delete_model(self.model)
@@ -64,4 +68,10 @@ class ShrewdManagerTest(TransactionTestCase):
         self.assertEqual(
             type(self.naive_mgr.get_queryset()),
             NaiveQuerySet
+        )
+
+    def test_recycle_bin_manager_operates_on_recycle_bin_queryset(self):
+        self.assertEqual(
+            type(self.recycle_bin_mgr.get_queryset()),
+            RecycleBinQuerySet
         )

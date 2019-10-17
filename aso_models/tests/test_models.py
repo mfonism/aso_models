@@ -4,7 +4,7 @@ from django.db.models.base import ModelBase
 from django.test import TestCase, TransactionTestCase
 
 from ..models import AbstractShrewdModel
-from ..managers import ShrewdManager
+from ..managers import ShrewdManager, NaiveManager
 
 
 class AbstractnessTest(TestCase):
@@ -58,9 +58,16 @@ class ShrewdModelTest(TransactionTestCase):
         with connection.schema_editor() as schema_editor:
             schema_editor.delete_model(self.model)
 
-    def test_shrewd_manager_on_model_dot_objects(self):
+    def test_shrewd_manager_on_shrewd_model_dot_objects(self):
         '''
-        Assert that the objects attribute on the model
-        points at a shrewd manager.
+        Assert that the `objects` attribute on shrewd
+        model points at a shrewd manager.
         '''
         self.assertEqual(type(self.model.objects), ShrewdManager)
+
+    def test_naive_manager_on_shrewd_model(self):
+        '''
+        Assert that the `all_objects` attribute on shrewd
+        model points at a naive manager.
+        '''
+        self.assertEqual(type(self.model.all_objects), NaiveManager)

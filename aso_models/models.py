@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-from .managers import ShrewdManager
+from .managers import ShrewdManager, NaiveManager
 
 
 class AbstractShrewdModel(models.Model):
@@ -30,3 +30,4 @@ class AbstractShrewdModel(models.Model):
     deleted_at = models.DateTimeField(blank=True, null=True)
 
     objects = ShrewdManager()
+    all_objects = NaiveManager()

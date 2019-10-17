@@ -1,3 +1,4 @@
+from django.apps import registry
 from django.db import connection, models
 from django.db.models.base import ModelBase
 from django.test import TransactionTestCase
@@ -13,11 +14,28 @@ class ShrewdQuerySetTest(TransactionTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.model = ModelBase(
-            f'__TestModel__{cls.abstract_model.__name__}',
-            (cls.abstract_model,),
-            {'__module__': cls.abstract_model.__module__}
-        )
+        '''
+        Programmatically create a concrete subclass of the abstract model.
+
+        If this particular model has been already created (by some other test
+        case), get that one.
+        Otherwise, create it.
+        '''
+        # apps here, is a registry which stores the configuration of
+        # installed applications, and keeps track of models
+        # apps = registry.Apps(installed_apps=None)
+        apps = registry.apps
+        try:
+            cls.model = apps.get_model(
+                'aso_models', '__testmodel__abstractshrewdmodel'
+            )
+        except LookupError:
+            cls.model = ModelBase(
+                f'__TestModel__{cls.abstract_model.__name__}',
+                (cls.abstract_model,),
+                {'__module__': cls.abstract_model.__module__}
+            )
+
         super().setUpClass()
 
     def setUp(self):

@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-from .managers import ShrewdManager, NaiveManager
+from .managers import ShrewdManager, NaiveManager, RecycleBinManager
 
 
 class AbstractShrewdModel(models.Model):
@@ -31,3 +31,4 @@ class AbstractShrewdModel(models.Model):
 
     objects = ShrewdManager()
     all_objects = NaiveManager()
+    recycle_bin = RecycleBinManager()

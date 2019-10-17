@@ -4,7 +4,7 @@ from django.db.models.base import ModelBase
 from django.test import TestCase, TransactionTestCase
 
 from ..models import AbstractShrewdModel
-from ..managers import ShrewdManager, NaiveManager
+from ..managers import ShrewdManager, NaiveManager, RecycleBinManager
 
 
 class AbstractnessTest(TestCase):
@@ -71,3 +71,10 @@ class ShrewdModelTest(TransactionTestCase):
         model points at a naive manager.
         '''
         self.assertEqual(type(self.model.all_objects), NaiveManager)
+
+    def test_recycle_bin_on_shrewd_model(self):
+        '''
+        Assert that the `recycle_bin` attribute on shrewd
+        model points at a recycle bin manager.
+        '''
+        self.assertEqual(type(self.model.recycle_bin), RecycleBinManager)

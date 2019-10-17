@@ -4,8 +4,8 @@ from django.db.models.base import ModelBase
 from django.test import TransactionTestCase
 
 from ..models import AbstractShrewdModel
-from ..managers import ShrewdManager
-from ..querysets import ShrewdQuerySet
+from ..managers import ShrewdManager, NaiveManager
+from ..querysets import ShrewdQuerySet, NaiveQuerySet
 
 
 class ShrewdManagerTest(TransactionTestCase):
@@ -46,6 +46,10 @@ class ShrewdManagerTest(TransactionTestCase):
         self.shrewd_mgr = ShrewdManager()
         self.shrewd_mgr.model = self.model
 
+        # mock up a naive manager
+        self.naive_mgr = NaiveManager()
+        self.naive_mgr.model = self.model
+
     def tearDown(self):
         with connection.schema_editor() as schema_editor:
             schema_editor.delete_model(self.model)
@@ -54,4 +58,10 @@ class ShrewdManagerTest(TransactionTestCase):
         self.assertEqual(
             type(self.shrewd_mgr.get_queryset()),
             ShrewdQuerySet
+        )
+
+    def test_naive_manager_operates_on_naive_queryset(self):
+        self.assertEqual(
+            type(self.naive_mgr.get_queryset()),
+            NaiveQuerySet
         )

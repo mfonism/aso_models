@@ -24,6 +24,11 @@ class ShrewdQuerySetTest(TransactionTestCase):
         with connection.schema_editor() as schema_editor:
             schema_editor.create_model(self.model)
 
+        # the querysets
+        self.shrewd_qs = ShrewdQuerySet(self.model)
+        self.naive_qs = NaiveQuerySet(self.model)
+        self.recycle_bin_qs = RecycleBinQuerySet(self.model)
+
         # create ten model objects, save them
         self.mos = [self.model() for i in range(10)]
         for mo in self.mos:
@@ -44,9 +49,8 @@ class ShrewdQuerySetTest(TransactionTestCase):
         Assert that shrewd queryset fetches only
         active objects which are not currently soft-deleted.
         '''
-        shrewd_qs = ShrewdQuerySet(self.model)
-        self.assertEqual(shrewd_qs.count(), 6)
-        for mo in shrewd_qs:
+        self.assertEqual(self.shrewd_qs.count(), 6)
+        for mo in self.shrewd_qs:
             self.assertIsNotNone(mo.activated_at)
             self.assertIsNone(mo.deleted_at)
 
@@ -54,10 +58,8 @@ class ShrewdQuerySetTest(TransactionTestCase):
         '''
         Assert that recycle bin queryset fetches only soft-deleted objects.
         '''
-        recycle_bin_qs = RecycleBinQuerySet(self.model)
-
-        self.assertEqual(recycle_bin_qs.count(), 4)
-        for mo in recycle_bin_qs:
+        self.assertEqual(self.recycle_bin_qs.count(), 4)
+        for mo in self.recycle_bin_qs:
             self.assertIsNotNone(mo.deleted_at)
 
     def test_naive_fetch(self):
@@ -65,40 +67,33 @@ class ShrewdQuerySetTest(TransactionTestCase):
         Assert that naive queryset fetches every object of
         the underlying model which exists in the database.
         '''
-        naive_qs = NaiveQuerySet(self.model)
-
-        self.assertEqual(naive_qs.count(), 10)
-        self.assertEqual(list(naive_qs), self.mos)
+        self.assertEqual(self.naive_qs.count(), 10)
+        self.assertEqual(list(self.naive_qs), self.mos)
 
     def test_shrewd_bulk_delete(self):
         '''
         Assert that bulk delete on a shrewd queryset clears the queryset.
         '''
-        shrewd_qs = ShrewdQuerySet(self.model)
+        self.assertEqual(self.shrewd_qs.count(), 6)
 
-        self.assertEqual(shrewd_qs.count(), 6)
-
-        num, _ = shrewd_qs.delete()
+        num, _ = self.shrewd_qs.delete()
         self.assertEqual(num, 6)
         self.assertIsInstance(_, dict)
-        self.assertEqual(shrewd_qs.count(), 0)
+        self.assertEqual(self.shrewd_qs.count(), 0)
 
     def test_shrewd_bulk_delete_is_soft(self):
         '''
         Assert that bulk delete on a shrewd queryset
         sends the so deleted objects to the recycle bin.
         '''
-        shrewd_qs = ShrewdQuerySet(self.model)
-        recycle_bin_qs = RecycleBinQuerySet(self.model)
+        pre_deletion_pks = [mo.pk for mo in self.shrewd_qs]
 
-        pre_deletion_pks = [mo.pk for mo in shrewd_qs]
+        self.assertEqual(self.shrewd_qs.count(), 6)
+        self.assertEqual(self.recycle_bin_qs.count(), 4)
+        self.shrewd_qs.delete()
+        self.assertEqual(self.recycle_bin_qs.count(), 10)
 
-        self.assertEqual(shrewd_qs.count(), 6)
-        self.assertEqual(recycle_bin_qs.count(), 4)
-        shrewd_qs.delete()
-        self.assertEqual(recycle_bin_qs.count(), 10)
-
-        recycle_bin_pks = [mo.pk for mo in recycle_bin_qs]
+        recycle_bin_pks = [mo.pk for mo in self.recycle_bin_qs]
         for deleted_mo_pk in pre_deletion_pks:
             self.assertIn(deleted_mo_pk, recycle_bin_pks)
 
@@ -106,30 +101,25 @@ class ShrewdQuerySetTest(TransactionTestCase):
         '''
         Assert that bulk delete on a recycle bin clears the recycle bin.
         '''
-        recycle_bin_qs = RecycleBinQuerySet(self.model)
+        self.assertEqual(self.recycle_bin_qs.count(), 4)
 
-        self.assertEqual(recycle_bin_qs.count(), 4)
-
-        num, _ = recycle_bin_qs.delete()
+        num, _ = self.recycle_bin_qs.delete()
         self.assertEqual(num, 4)
         self.assertIsInstance(_, dict)
-        self.assertEqual(recycle_bin_qs.count(), 0)
+        self.assertEqual(self.recycle_bin_qs.count(), 0)
 
     def test_recycle_bin_delete_is_permanent(self):
         '''
         Assert that the recycle bin deletes objects for good on bulk deletion.
         '''
-        recycle_bin_qs = RecycleBinQuerySet(self.model)
-        naive_qs = NaiveQuerySet(self.model)
+        pre_deletion_pks = [mo.pk for mo in self.recycle_bin_qs]
 
-        pre_deletion_pks = [mo.pk for mo in recycle_bin_qs]
+        self.assertEqual(self.naive_qs.count(), 10)
+        self.assertEqual(self.recycle_bin_qs.count(), 4)
+        self.recycle_bin_qs.delete()
+        self.assertEqual(self.naive_qs.count(), 6)
 
-        self.assertEqual(naive_qs.count(), 10)
-        self.assertEqual(recycle_bin_qs.count(), 4)
-        recycle_bin_qs.delete()
-        self.assertEqual(naive_qs.count(), 6)
-
-        remaining_pks = [mo.pk for mo in naive_qs]
+        remaining_pks = [mo.pk for mo in self.naive_qs]
         for deleted_mo_pk in pre_deletion_pks:
             self.assertNotIn(deleted_mo_pk, remaining_pks)
 
@@ -137,15 +127,13 @@ class ShrewdQuerySetTest(TransactionTestCase):
         '''
         Assert that naive queryset deletes objects for good on bulk deletion.
         '''
-        naive_qs = NaiveQuerySet(self.model)
-
         indb = models.QuerySet(self.model)
 
-        self.assertEqual(naive_qs.count(), 10)
+        self.assertEqual(self.naive_qs.count(), 10)
         self.assertEqual(indb.count(), 10)
-        naive_qs.delete()
+        self.naive_qs.delete()
         self.assertEqual(indb.count(), 0)
-        self.assertEqual(naive_qs.count(), 0)
+        self.assertEqual(self.naive_qs.count(), 0)
 
     def test_error_calling_restore_on_shrewd_qs(self):
         '''
@@ -153,7 +141,7 @@ class ShrewdQuerySetTest(TransactionTestCase):
         calling `restore` on shrewd queryset.
         '''
         with self.assertRaises(AssertionError) as cm:
-            ShrewdQuerySet(self.model).restore()
+            self.shrewd_qs.restore()
 
         expected_error_msg = (
             'Restore operation is not allowed on a shrewd queryset.\n'
@@ -166,13 +154,11 @@ class ShrewdQuerySetTest(TransactionTestCase):
         Assert that bulk restore is possible on the recycle bin,
         and that it actually clears the bin of the deleted objects.
         '''
-        recycle_bin_qs = RecycleBinQuerySet(self.model)
+        self.assertEqual(self.recycle_bin_qs.count(), 4)
 
-        self.assertEqual(recycle_bin_qs.count(), 4)
-
-        num = recycle_bin_qs.restore()
+        num = self.recycle_bin_qs.restore()
         self.assertEqual(num, 4)
-        self.assertEqual(recycle_bin_qs.count(), 0)
+        self.assertEqual(self.recycle_bin_qs.count(), 0)
 
     def test_restored_objects_can_be_found_outside_the_recycle_bin(self):
         '''
@@ -180,17 +166,14 @@ class ShrewdQuerySetTest(TransactionTestCase):
         recycle bin -- where they can be found by a shrewd queryset
         operating on the respective model.
         '''
-        recycle_bin_qs = RecycleBinQuerySet(self.model)
-        shrewd_qs = ShrewdQuerySet(self.model)
+        pre_restoration_pks = [mo.pk for mo in self.recycle_bin_qs]
 
-        pre_restoration_pks = [mo.pk for mo in recycle_bin_qs]
+        self.assertEqual(self.shrewd_qs.count(), 6)
+        self.assertEqual(self.recycle_bin_qs.count(), 4)
+        self.recycle_bin_qs.restore()
+        self.assertEqual(self.shrewd_qs.count(), 10)
 
-        self.assertEqual(shrewd_qs.count(), 6)
-        self.assertEqual(recycle_bin_qs.count(), 4)
-        recycle_bin_qs.restore()
-        self.assertEqual(shrewd_qs.count(), 10)
-
-        shrewd_qs_pks = [mo.pk for mo in shrewd_qs]
+        shrewd_qs_pks = [mo.pk for mo in self.shrewd_qs]
         for restored_mo_pk in pre_restoration_pks:
             self.assertIn(restored_mo_pk, shrewd_qs_pks)
 
@@ -199,9 +182,8 @@ class ShrewdQuerySetTest(TransactionTestCase):
         Assert that assertion error is raised on
         calling `restore` on shrewd queryset in its default mode.
         '''
-        naive_qs = NaiveQuerySet(self.model)
         with self.assertRaises(AssertionError) as cm:
-            naive_qs.restore()
+            self.naive_qs.restore()
 
         expected_error_msg = (
             'Restore operation is not allowed on a naive queryset.\n'

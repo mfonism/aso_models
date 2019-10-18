@@ -127,6 +127,12 @@ class ShrewdModelObjectTest(TransactionTestCase):
         with connection.schema_editor() as schema_editor:
             schema_editor.delete_model(self.model)
 
+    def test_is_outside_bin(self):
+        for mo in self.viewable:
+            self.assertTrue(mo.is_outside_bin())
+        for mo in self.recycled:
+            self.assertFalse(mo.is_outside_bin())
+
     def test_delete_is_soft_by_default(self):
         '''
         Assert that the delete op on a shrewd model object is soft by

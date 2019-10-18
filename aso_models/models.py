@@ -34,6 +34,13 @@ class AbstractShrewdModel(models.Model):
     recycle_bin = RecycleBinManager()
 
     def delete(self):
+        '''
+        Perfom soft deletion on model object.
+        '''
+        if self.deleted_at is not None:
+            # already soft deleted
+            # no op!
+            return 0, {}
         self.deleted_at = timezone.now()
         self.activated_at = None
         self.save()

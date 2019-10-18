@@ -139,3 +139,15 @@ class ShrewdModelObjectTest(TransactionTestCase):
         self.assertEqual(num, 1)
         self.assertNotIn(mo, self.model.objects.all())
         self.assertIn(mo, self.model.recycle_bin.all())
+
+    def test_soft_delete_is_a_no_op_in_the_recycle_bin(self):
+        '''
+        Assert that the delete op on a shrewd model object which
+        is already in the recycle bin does nothing to the object.
+        '''
+        mo = random.choice(self.recycled)
+
+        self.assertIn(mo, self.model.recycle_bin.all())
+        num, _ = mo.delete()
+        self.assertEqual(num, 0)
+        self.assertIn(mo, self.model.recycle_bin.all())

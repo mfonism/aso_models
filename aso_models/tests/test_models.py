@@ -178,3 +178,27 @@ class ShrewdModelObjectTest(TransactionTestCase):
         num, _ = mo.restore()
         self.assertEqual(num, 0)
         self.assertIn(mo, self.model.objects.all())
+
+    def test_hard_deletion(self):
+        '''
+        Assert that a shrewd model object can be deleted for good by
+        calling delete with the kwarg `hard=True`.
+        '''
+        mo = random.choice(self.viewable)
+
+        num, _ = mo.delete(hard=True)
+        self.assertEqual(num, 1)
+        with self.assertRaises(self.model.DoesNotExist):
+            mo.refresh_from_db()
+
+    def test_hard_deletion_on_soft_deleted_objects(self):
+        '''
+        Assert that hard deletion works even on objects that are
+        already in the recycle bin.
+        '''
+        mo = random.choice(self.recycled)
+
+        num, _ = mo.delete(hard=True)
+        self.assertEqual(num, 1)
+        with self.assertRaises(self.model.DoesNotExist):
+            mo.refresh_from_db()

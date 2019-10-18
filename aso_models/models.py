@@ -33,10 +33,15 @@ class AbstractShrewdModel(models.Model):
     all_objects = NaiveManager()
     recycle_bin = RecycleBinManager()
 
-    def delete(self):
+    def delete(self, **kwargs):
         '''
         Perfom soft deletion on model object.
         '''
+        hard = kwargs.pop('hard', False)
+        if hard:
+            # delete for good
+            return super().delete(**kwargs)
+
         if self.deleted_at is not None:
             # already soft deleted
             # no op!

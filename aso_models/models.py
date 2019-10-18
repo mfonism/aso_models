@@ -45,3 +45,12 @@ class AbstractShrewdModel(models.Model):
         self.activated_at = None
         self.save()
         return 1, {}
+
+    def restore(self):
+        '''
+        Restore model object from the recycle bin.
+        '''
+        self.deleted_at = None
+        self.activated_at = timezone.now()
+        self.save()
+        return 1, {}

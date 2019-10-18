@@ -151,3 +151,18 @@ class ShrewdModelObjectTest(TransactionTestCase):
         num, _ = mo.delete()
         self.assertEqual(num, 0)
         self.assertIn(mo, self.model.recycle_bin.all())
+
+    def test_restore_op(self):
+        '''
+        Assert that an object in the recycle bin can be restored --
+        brought out of the bin.
+        '''
+        mo = random.choice(self.recycled)
+
+        self.assertIn(mo, self.model.recycle_bin.all())
+        self.assertNotIn(mo, self.model.objects.all())
+
+        num, _ = mo.restore()
+        self.assertEqual(num, 1)
+        self.assertNotIn(mo, self.model.recycle_bin.all())
+        self.assertIn(mo, self.model.objects.all())

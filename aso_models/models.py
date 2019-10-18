@@ -50,6 +50,10 @@ class AbstractShrewdModel(models.Model):
         '''
         Restore model object from the recycle bin.
         '''
+        if self.deleted_at is None:
+            # already outside the recycle bin
+            # no op!
+            return 0, {}
         self.deleted_at = None
         self.activated_at = timezone.now()
         self.save()

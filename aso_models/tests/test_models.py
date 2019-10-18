@@ -166,3 +166,15 @@ class ShrewdModelObjectTest(TransactionTestCase):
         self.assertEqual(num, 1)
         self.assertNotIn(mo, self.model.recycle_bin.all())
         self.assertIn(mo, self.model.objects.all())
+
+    def test_restore_is_a_no_op_outside_the_recycle_bin(self):
+        '''
+        Assert that calling `restore` on a shrewd model object which
+        is not in the recycle bin does nothing to the object.
+        '''
+        mo = random.choice(self.viewable)
+
+        self.assertIn(mo, self.model.objects.all())
+        num, _ = mo.restore()
+        self.assertEqual(num, 0)
+        self.assertIn(mo, self.model.objects.all())

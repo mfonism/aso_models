@@ -32,3 +32,9 @@ class AbstractShrewdModel(models.Model):
     objects = ShrewdManager()
     all_objects = NaiveManager()
     recycle_bin = RecycleBinManager()
+
+    def delete(self):
+        self.deleted_at = timezone.now()
+        self.activated_at = None
+        self.save()
+        return 1, {}

@@ -1,7 +1,10 @@
+import random
+
 from django.apps import registry
 from django.db import connection
 from django.db.models.base import ModelBase
 from django.test import TestCase, TransactionTestCase
+from django.utils import timezone
 
 from ..models import AbstractShrewdModel
 from ..managers import ShrewdManager, NaiveManager, RecycleBinManager
@@ -78,3 +81,61 @@ class ShrewdModelTest(TransactionTestCase):
         model points at a recycle bin manager.
         '''
         self.assertEqual(type(self.model.recycle_bin), RecycleBinManager)
+
+
+class ShrewdModelObjectTest(TransactionTestCase):
+    '''
+    Test single model objects.
+    '''
+    abstract_model = AbstractShrewdModel
+
+    @classmethod
+    def setUpClass(cls):
+        apps = registry.apps
+        try:
+            cls.model = apps.get_model(
+                'aso_models', '__testmodel__abstractshrewdmodel'
+            )
+        except LookupError:
+            cls.model = ModelBase(
+                f'__TestModel__{cls.abstract_model.__name__}',
+                (cls.abstract_model,),
+                {'__module__': cls.abstract_model.__module__}
+            )
+
+        super().setUpClass()
+
+    def setUp(self):
+        with connection.schema_editor() as schema_editor:
+            schema_editor.create_model(self.model)
+
+        # create five model objects, save them
+        mos = [self.model() for i in range(5)]
+        for mo in mos:
+            mo.save()
+
+        # keep the first three as is
+        # send the remainder to the recycle bin
+        self.viewable = mos[:3]
+        self.recycled = mos[3:]
+        for mo in self.recycled:
+            mo.activated_at = None
+            mo.deleted_at = timezone.now()
+            mo.save()
+
+    def tearDown(self):
+        with connection.schema_editor() as schema_editor:
+            schema_editor.delete_model(self.model)
+
+    def test_delete_is_soft_by_default(self):
+        '''
+        Assert that the delete op on a shrewd model object is soft by
+        default -- the object is 'sent to the recycle bin'.
+        '''
+        mo = random.choice(self.viewable)
+
+        self.assertIn(mo, self.model.objects.all())
+        num, _ = mo.delete()
+        self.assertEqual(num, 1)
+        self.assertNotIn(mo, self.model.objects.all())
+        self.assertIn(mo, self.model.recycle_bin.all())

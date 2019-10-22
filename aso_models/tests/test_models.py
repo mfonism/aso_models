@@ -82,6 +82,18 @@ class ShrewdModelTest(TransactionTestCase):
         '''
         self.assertEqual(type(self.model.recycle_bin), RecycleBinManager)
 
+    def test_default_manager_is_shrewd(self):
+        '''
+        Assert that the default manager for shrewd model is shrewd.
+        '''
+        self.assertEqual(type(self.model._default_manager), ShrewdManager)
+
+    def test_base_manager_is_naive(self):
+        '''
+        Assert that the base manager for shrewd model is naive.
+        '''
+        self.assertEqual(type(self.model._base_manager), NaiveManager)
+
 
 class ShrewdModelObjectTest(TransactionTestCase):
     '''

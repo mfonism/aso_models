@@ -32,6 +32,8 @@ class AbstractShrewdModel(models.Model):
     '''
     class Meta:
         abstract = True
+        base_manager_name = 'all_objects'
+        default_manager_name = 'objects'
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

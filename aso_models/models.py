@@ -35,9 +35,6 @@ class AbstractShrewdModel(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    activated_at = models.DateTimeField(
-        default=timezone.now, blank=True, null=True
-    )
     deleted_at = models.DateTimeField(blank=True, null=True)
 
     # model managers
@@ -77,13 +74,11 @@ class AbstractShrewdModel(models.Model):
 
     def _send_to_bin(self):
         self.deleted_at = timezone.now()
-        self.activated_at = None
         self.save()
         return 1, {}
 
     def _bring_back_from_bin(self):
         self.deleted_at = None
-        self.activated_at = timezone.now()
         self.save()
         return 1, {}
 

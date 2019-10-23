@@ -131,7 +131,6 @@ class ShrewdModelObjectTest(TransactionTestCase):
         self.viewable = mos[:3]
         self.recycled = mos[3:]
         for mo in self.recycled:
-            mo.activated_at = None
             mo.deleted_at = timezone.now()
             mo.save()
 

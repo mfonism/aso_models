@@ -14,14 +14,14 @@ class ShrewdQuerySet(models.QuerySet):
         super().__init__(*args, **kwargs)
         # ensure it only ever fetches objects which are not in the recycle bin
         self.query.add_q(
-            Q(deleted_at__isnull=True, activated_at__isnull=False)
+            Q(deleted_at__isnull=True)
         )
 
     def delete(self):
         '''
         Send the fetched objects into the recycle bin.
         '''
-        return self.update(deleted_at=timezone.now(), activated_at=None), {}
+        return self.update(deleted_at=timezone.now()), {}
 
     def restore(self):
         raise AssertionError(
@@ -61,4 +61,4 @@ class RecycleBinQuerySet(models.QuerySet):
         '''
         Send the fetched objects out of the recycle bin.
         '''
-        return self.update(deleted_at=None, activated_at=timezone.now())
+        return self.update(deleted_at=None)

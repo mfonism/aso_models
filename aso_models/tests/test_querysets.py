@@ -52,9 +52,8 @@ class ShrewdQuerySetTest(TransactionTestCase):
         for mo in self.mos:
             mo.save()
         # populate the appropriate fields in the
-        # last four objects to simulate soft delete
+        # last four objects to simulate their respective soft deletion
         for mo in self.mos[-4:]:
-            mo.activated_at = None
             mo.deleted_at = timezone.now()
             mo.save()
 
@@ -65,11 +64,10 @@ class ShrewdQuerySetTest(TransactionTestCase):
     def test_shrewd_qs_fetch(self):
         '''
         Assert that shrewd queryset fetches only
-        active objects which are not currently soft-deleted.
+        objects which are not currently soft-deleted.
         '''
         self.assertEqual(self.shrewd_qs.count(), 6)
         for mo in self.shrewd_qs:
-            self.assertIsNotNone(mo.activated_at)
             self.assertIsNone(mo.deleted_at)
 
     def test_recycle_bin_fetch(self):
